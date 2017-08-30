@@ -1,0 +1,77 @@
+parse-server:
+  #build: .
+  image: kibukamusoke/parse-server
+  ports:
+    - "1337:1337"
+  environment:
+    PORT: 1337
+    DATABASE_URI: "mongodb://ezpoint:ez99point123@172.17.0.1:27017/ezdata"
+    APP_ID: "ezpoint11"
+    MASTER_KEY: "ezpoint99!@#123"
+    PARSE_MOUNT: "/ezpbaas"
+    REST_API_KEY: "ezpoint99!@#123"
+    JAVASCRIPT_KEY: "ezpoint99!@#123"
+    FACEBOOK_APP_IDS: "unknown"
+    SERVER_URL: "http://localhost:1337"
+    GCM_ID: ""
+    GCM_KEY: ""
+    VERIFY_USER_EMAILS: 0
+    EMAIL_MODULE: "" # "" or "parse-server-simple-mailgun-adapter"
+    EMAIL_FROM: ""
+    EMAIL_DOMAIN: ""
+    EMAIL_API_KEY: ""
+    EMAIL_DISPLAY_NAME: ""
+    EMAIL_REPLY_TO: ""
+    EMAIL_VERIFICATION_SUBJECT: ""
+    EMAIL_VERIFICATION_BODY: ""
+    EMAIL_PASSWORD_RESET_SUBJECT: ""
+    EMAIL_PASSWORD_RESET_BODY: ""
+
+    ADMINUSERNAME: "admin"
+    ADMINPASSWORD: "Money123"
+
+    APP_NAME: "EZ-POINT"
+    S3_ACCESS_KEY:    ""
+    S3_SECRET_KEY:    ""
+    S3_BUCKET:        ""
+    S3_DIRECT:        ""
+    GCP_PROJECT_ID:   ""
+    GCP_KEYFILE_PATH: ""
+    GCS_BUCKET:       ""
+    GCS_DIRECT:       "false"
+    AZURE_ACCOUNT:    ""
+    AZURE_CONTAINER:  ""
+    AZURE_ACCESS_KEY: ""
+    AZURE_DIRECT:     ""
+    LIVEQUERY_CLASSES: $LIVEQUERY_CLASSES
+    GRAPHQL_SUPPORT:  "0"
+    GRAPHQL_SCHEMA:   ""
+    LOG_LEVEL:        ""
+  links:
+    - mongo
+  volumes:
+    - ./cloud-code:/cloud
+
+mongo:
+  image: mongo:3.0.8 # ref. https://github.com/ParsePlatform/parse-server/issues/1913
+  ports:
+    - "27017:27017"
+  volumes_from:
+    - mongo-data
+  environment:
+    MONGODB_USER: "ezpoint"
+    MONGODB_DATABASE: "ezdata"
+    MONGODB_PASS: "ez99point123"
+
+#  command: "--smallfiles --logpath=/dev/null --setParameter failIndexKeyTooLong=false --rest --auth"
+  command: "--smallfiles --logpath=/dev/null --setParameter failIndexKeyTooLong=false"
+# ref. http://www.diogogmt.com/running-mongodb-with-docker-and-compose/
+
+mongo-data:
+  image: mongo
+  volumes:
+    - ./db-data:/data/db
+  command: "--break-mongo --auth"
+
+
+# vim:set et ts=2 sw=2:
