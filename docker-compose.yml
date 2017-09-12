@@ -2,17 +2,28 @@ parse-server:
   #build: .
   image: kibukamusoke/parse-server
   ports:
-    - "1337:1337"
+    - "8082:8081"
   environment:
-    PORT: 1337
-    DATABASE_URI: "mongodb://ezpoint:ez99point123@172.17.0.1:27017/ezdata"
+    PORT: 8081
+    DATABASE_URI: "mongodb://ezpoint:ez99point123@172.17.0.1:27018/ezdata"
     APP_ID: "ezpoint11"
     MASTER_KEY: "ezpoint99!@#123"
     PARSE_MOUNT: "/ezpbaas"
     REST_API_KEY: "ezpoint99!@#123"
     JAVASCRIPT_KEY: "ezpoint99!@#123"
     FACEBOOK_APP_IDS: "unknown"
-    SERVER_URL: "http://localhost:1337"
+    SERVER_URL: "http://ezpoint.ezeemoney.biz:8082"
+    #dashboard other apps settings
+    SERVER_URL_1: "http://ezpoint.ezeemoney.biz:8081"
+    APP_ID_1: "ezpoint11"
+    MASTER_KEY_1: "ezpoint99!@#123"
+    APP_NAME_1: "EZ BOX"
+    ##############################
+    SERVER_URL_2: ""
+    APP_ID_2: ""
+    MASTER_KEY_2: ""
+    APP_NAME_2: ""
+
     GCM_ID: ""
     GCM_KEY: ""
     VERIFY_USER_EMAILS: 0
@@ -50,12 +61,13 @@ parse-server:
   links:
     - mongo
   volumes:
-    - ./cloud-code:/cloud
+    - ./cloud-code:/cloud/code
+    - ./cloud-files:/cloud/files
 
 mongo:
   image: mongo:3.0.8 # ref. https://github.com/ParsePlatform/parse-server/issues/1913
   ports:
-    - "27017:27017"
+    - "27018:27017"
   volumes_from:
     - mongo-data
   environment:

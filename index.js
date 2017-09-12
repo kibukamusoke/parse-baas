@@ -6,6 +6,7 @@
 let express = require('express');
 let ParseServer = require('parse-server').ParseServer;
 let ParseDashboard = require('parse-dashboard');
+let FSFilesAdapter = require('parse-server-fs-adapter');
 let path = require('path');
 
 
@@ -16,12 +17,17 @@ if (!databaseUri) {
     console.log('DATABASE_URI not specified, falling back to localhost.');
 }
 
+let fsAdapter = new FSFilesAdapter({
+    filesSubDirectory: './cloud/files'
+});
+
 let server = new ParseServer({
     databaseURI: databaseUri || 'mongodb://admin:password@localhost:27017/db',
-    cloud: process.env.CLOUD_CODE_MAIN || __dirname + '/cloud/main.js',
+    cloud: process.env.CLOUD_CODE_MAIN || './cloud/code/main.js',
     appId: process.env.APP_ID || 'tvx',
     masterKey: process.env.MASTER_KEY || 'txv123!@#',
     serverURL: (process.env.SERVER_URL || 'http://localhost:1337') + mount,
+    filesAdapter: fsAdapter,
     liveQuery: {
         classNames: process.env.LIVEQUERY_CLASSES.split(',') ||
             [
@@ -42,18 +48,37 @@ let parseDashboardSettings = {
             masterKey: process.env.MASTER_KEY || 'tvx123!@#',
             appName: process.env.APP_NAME || "TVX",
             //iconName: "cherryLogo.png",
+        },
+        {
+            serverURL: (process.env.SERVER_URL_1 || 'http://localhost:1337') + mount,
+            appId: process.env.APP_ID_1 || 'tvx',
+            masterKey: process.env.MASTER_KEY_1 || 'tvx123!@#',
+            appName: process.env.APP_NAME_1 || "TVX",
+            //iconName: "cherryLogo.png",
         }
     ],
     users: [
 
         {
-            user: process.env.ADMINUSERNAME,
-            pass: process.env.ADMINPASSWORD,
+            user: process.env.ADMINUSERNAME || 'admin',
+            pass: process.env.ADMINPASSWORD || 'admin',
             masterKey: process.env.MASTER_KEY || 'tvx123!@#',
             apps: [
                 {
                     appId: process.env.APP_ID || 'tvx'
-                }
+                },
+                {
+                    appId: process.env.APP_ID_1 || 'tvx_1'
+                }/*,
+                {
+                    appId: process.env.APP_ID_2 || 'tvx'
+                },
+                {
+                    appId: process.env.APP_ID_3 || 'tvx'
+                },
+                {
+                    appId: process.env.APP_ID_4 || 'tvx'
+                }*/
             ]
         }
     ],

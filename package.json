@@ -29,6 +29,7 @@
     "jssha": "^2.3.1",
     "parse-dashboard": "^1.1.0",
     "parse-server": "^2.5.3",
+    "parse-server-fs-adapter": "^1.0.1",
     "path": "^0.12.7"
   }
 }
