@@ -21,21 +21,16 @@ var InMemoryCacheAdapter = exports.InMemoryCacheAdapter = function () {
   _createClass(InMemoryCacheAdapter, [{
     key: 'get',
     value: function get(key) {
-      var _this = this;
-
-      return new Promise(function (resolve) {
-        var record = _this.cache.get(key);
-        if (record == null) {
-          return resolve(null);
-        }
-
-        return resolve(JSON.parse(record));
-      });
+      var record = this.cache.get(key);
+      if (record === null) {
+        return Promise.resolve(null);
+      }
+      return Promise.resolve(record);
     }
   }, {
     key: 'put',
     value: function put(key, value, ttl) {
-      this.cache.put(key, JSON.stringify(value), ttl);
+      this.cache.put(key, value, ttl);
       return Promise.resolve();
     }
   }, {

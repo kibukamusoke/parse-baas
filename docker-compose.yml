@@ -2,30 +2,23 @@ parse-server:
   #build: .
   image: kibukamusoke/parse-server
   ports:
-    - "8082:8081"
+    - "8084:8081"
   environment:
     PORT: 8081
-    DATABASE_URI: "mongodb://ezpoint:ez99point123@172.17.0.1:27018/ezdata"
-    APP_ID: "ezpoint11"
-    MASTER_KEY: "ezpoint99!@#123"
-    PARSE_MOUNT: "/ezpbaas"
-    REST_API_KEY: "ezpoint99!@#123"
-    JAVASCRIPT_KEY: "ezpoint99!@#123"
+    USE_SSL: "true"
+    SSL_SERVER_CERT_FILE: "server.crt"
+    SSL_SERVER_KEY_FILE: "server.key"
+    DATABASE_URI: "mongodb://172.17.0.1:27020/appdata"
+    APP_ID: "app11"
+    MASTER_KEY: "app11!@#123"
+    PARSE_MOUNT: "/parse"
+    REST_API_KEY: "app11!@#123"
+    JAVASCRIPT_KEY: "app11!@#123"
     FACEBOOK_APP_IDS: "unknown"
-    SERVER_URL: "http://ezpoint.ezeemoney.biz:8082"
-    #dashboard other apps settings
-    SERVER_URL_1: "http://ezpoint.ezeemoney.biz:8081"
-    APP_ID_1: "ezpoint11"
-    MASTER_KEY_1: "ezpoint99!@#123"
-    APP_NAME_1: "EZ BOX"
-    ##############################
-    SERVER_URL_2: ""
-    APP_ID_2: ""
-    MASTER_KEY_2: ""
-    APP_NAME_2: ""
-
-    GCM_ID: ""
-    GCM_KEY: ""
+    SERVER_URL: "http://ezpoint.ezeemoney.biz:8084"
+    FIREBASE_SENDER_ID: "209761675560"
+    FIREBASE_API_KEY: "AAAAMNbFKSg:APA91bFL96uVjECqo94da8NdBAEYLmNKSCELMLHF7--NlqJAbKQ0mTrr_1z9I61mrKTbkCiRfwWO5vqoBFlDh80QBu1E1m8jTeQlV8c9MvZafwWNf5rz0qqKCFwmb3MXEFfmIlCue0tU"
+    IOS_BUNDLE_ID: "my.tracksol.notify"
     VERIFY_USER_EMAILS: 0
     EMAIL_MODULE: "" # "" or "parse-server-simple-mailgun-adapter"
     EMAIL_FROM: ""
@@ -38,10 +31,12 @@ parse-server:
     EMAIL_PASSWORD_RESET_SUBJECT: ""
     EMAIL_PASSWORD_RESET_BODY: ""
 
+    PRODUCTION: "true" #production mode true or false
+
     ADMINUSERNAME: "admin"
     ADMINPASSWORD: "Money123"
 
-    APP_NAME: "EZ-POINT"
+    APP_NAME: "Notify"
     S3_ACCESS_KEY:    ""
     S3_SECRET_KEY:    ""
     S3_BUCKET:        ""
@@ -54,26 +49,30 @@ parse-server:
     AZURE_CONTAINER:  ""
     AZURE_ACCESS_KEY: ""
     AZURE_DIRECT:     ""
-    LIVEQUERY_CLASSES: $LIVEQUERY_CLASSES
+    LIVEQUERY_CLASSES: "Message"
     GRAPHQL_SUPPORT:  "0"
     GRAPHQL_SCHEMA:   ""
     LOG_LEVEL:        ""
   links:
     - mongo
   volumes:
-    - ./cloud-code:/cloud/code
-    - ./cloud-files:/cloud/files
+    - ./cloud-code:/usr/src/app/cloud
+    - ./cloud-files/uploads:/usr/src/app/files/uploads
+    - ./cloud-files/ios:/usr/src/app/files/ios
+    - ./cloud-files/ssl:/usr/src/app/files/ssl
+    - ./cloud-files/icons:/usr/src/app/files/icons
+    - ./cloud-files/logs:/usr/src/app/files/logs
 
 mongo:
   image: mongo:3.0.8 # ref. https://github.com/ParsePlatform/parse-server/issues/1913
   ports:
-    - "27018:27017"
+    - "27020:27017"
   volumes_from:
     - mongo-data
   environment:
-    MONGODB_USER: "ezpoint"
-    MONGODB_DATABASE: "ezdata"
-    MONGODB_PASS: "ez99point123"
+    MONGODB_USER: "admin"
+    MONGODB_DATABASE: "appdata"
+    MONGODB_PASS: "admin123"
 
 #  command: "--smallfiles --logpath=/dev/null --setParameter failIndexKeyTooLong=false --rest --auth"
   command: "--smallfiles --logpath=/dev/null --setParameter failIndexKeyTooLong=false"
@@ -83,7 +82,7 @@ mongo-data:
   image: mongo
   volumes:
     - ./db-data:/data/db
-  command: "--break-mongo --auth"
+  command: "--break-mongo"
 
 
 # vim:set et ts=2 sw=2:

@@ -33,6 +33,8 @@ var _defaults2 = _interopRequireDefault(_defaults);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
@@ -228,8 +230,12 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: 'addFieldIfNotExists',
     value: function addFieldIfNotExists(className, fieldName, type) {
+      var _this5 = this;
+
       return this._schemaCollection().then(function (schemaCollection) {
         return schemaCollection.addFieldIfNotExists(className, fieldName, type);
+      }).then(function () {
+        return _this5.createIndexesIfNeeded(className, fieldName, type);
       });
     }
 
@@ -239,7 +245,7 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: 'deleteClass',
     value: function deleteClass(className) {
-      var _this5 = this;
+      var _this6 = this;
 
       return this._adaptiveCollection(className).then(function (collection) {
         return collection.drop();
@@ -252,13 +258,13 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
       })
       // We've dropped the collection, now remove the _SCHEMA document
       .then(function () {
-        return _this5._schemaCollection();
+        return _this6._schemaCollection();
       }).then(function (schemaCollection) {
         return schemaCollection.findAndDeleteSchema(className);
       });
     }
 
-    // Delete all data known to this adatper. Used for testing.
+    // Delete all data known to this adapter. Used for testing.
 
   }, {
     key: 'deleteAllClasses',
@@ -281,7 +287,7 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
     // Pointer field names are passed for legacy reasons: the original mongo
     // format stored pointer field names differently in the database, and therefore
     // needed to know the type of the field before it could delete it. Future database
-    // adatpers should ignore the pointerFieldNames argument. All the field names are in
+    // adapters should ignore the pointerFieldNames argument. All the field names are in
     // fieldNames, they show up additionally in the pointerFieldNames database for use
     // by the mongo adapter, which deals with the legacy mongo format.
 
@@ -294,7 +300,7 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: 'deleteFields',
     value: function deleteFields(className, schema, fieldNames) {
-      var _this6 = this;
+      var _this7 = this;
 
       var mongoFormatNames = fieldNames.map(function (fieldName) {
         if (schema.fields[fieldName].type === 'Pointer') {
@@ -316,7 +322,7 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
       return this._adaptiveCollection(className).then(function (collection) {
         return collection.updateMany({}, collectionUpdate);
       }).then(function () {
-        return _this6._schemaCollection();
+        return _this7._schemaCollection();
       }).then(function (schemaCollection) {
         return schemaCollection.updateSchema(className, schemaUpdate);
       });
@@ -342,13 +348,13 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
     key: 'getClass',
     value: function getClass(className) {
       return this._schemaCollection().then(function (schemasCollection) {
-        return schemasCollection._fechOneSchemaFrom_SCHEMA(className);
+        return schemasCollection._fetchOneSchemaFrom_SCHEMA(className);
       });
     }
 
     // TODO: As yet not particularly well specified. Creates an object. Maybe shouldn't even need the schema,
     // and should infer from the type. Or maybe does need the schema for validations. Or maybe needs
-    // the schem only for the legacy mongo format. We'll figure that out later.
+    // the schema only for the legacy mongo format. We'll figure that out later.
 
   }, {
     key: 'createObject',
@@ -360,7 +366,15 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
       }).catch(function (error) {
         if (error.code === 11000) {
           // Duplicate value
-          throw new _node2.default.Error(_node2.default.Error.DUPLICATE_VALUE, 'A duplicate value for a field with unique values was provided');
+          var err = new _node2.default.Error(_node2.default.Error.DUPLICATE_VALUE, 'A duplicate value for a field with unique values was provided');
+          err.underlyingError = error;
+          if (error.message) {
+            var matches = error.message.match(/index:[\sa-zA-Z0-9_\-\.]+\$?([a-zA-Z_-]+)_1/);
+            if (matches && Array.isArray(matches)) {
+              err.userInfo = { duplicated_field: matches[1] };
+            }
+          }
+          throw err;
         }
         throw error;
       });
@@ -436,7 +450,7 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: 'find',
     value: function find(className, schema, query, _ref4) {
-      var _this7 = this;
+      var _this8 = this;
 
       var skip = _ref4.skip,
           limit = _ref4.limit,
@@ -453,14 +467,17 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
         memo[(0, _MongoTransform.transformKey)(className, key, schema)] = 1;
         return memo;
       }, {});
+
       readPreference = this._parseReadPreference(readPreference);
-      return this._adaptiveCollection(className).then(function (collection) {
+      return this.createTextIndexesIfNeeded(className, query).then(function () {
+        return _this8._adaptiveCollection(className);
+      }).then(function (collection) {
         return collection.find(mongoWhere, {
           skip: skip,
           limit: limit,
           sort: mongoSort,
           keys: mongoKeys,
-          maxTimeMS: _this7._maxTimeMS,
+          maxTimeMS: _this8._maxTimeMS,
           readPreference: readPreference
         });
       }).then(function (objects) {
@@ -492,9 +509,8 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
       }).catch(function (error) {
         if (error.code === 11000) {
           throw new _node2.default.Error(_node2.default.Error.DUPLICATE_VALUE, 'Tried to ensure field uniqueness for a class that already has duplicates.');
-        } else {
-          throw error;
         }
+        throw error;
       });
     }
 
@@ -503,11 +519,11 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: '_rawFind',
     value: function _rawFind(className, query) {
-      var _this8 = this;
+      var _this9 = this;
 
       return this._adaptiveCollection(className).then(function (collection) {
         return collection.find(query, {
-          maxTimeMS: _this8._maxTimeMS
+          maxTimeMS: _this9._maxTimeMS
         });
       });
     }
@@ -517,13 +533,13 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
   }, {
     key: 'count',
     value: function count(className, schema, query, readPreference) {
-      var _this9 = this;
+      var _this10 = this;
 
       schema = convertParseSchemaToMongoSchema(schema);
       readPreference = this._parseReadPreference(readPreference);
       return this._adaptiveCollection(className).then(function (collection) {
         return collection.count((0, _MongoTransform.transformWhere)(className, query, schema), {
-          maxTimeMS: _this9._maxTimeMS,
+          maxTimeMS: _this10._maxTimeMS,
           readPreference: readPreference
         });
       });
@@ -564,6 +580,39 @@ var MongoStorageAdapter = exports.MongoStorageAdapter = function () {
     value: function createIndex(className, index) {
       return this._adaptiveCollection(className).then(function (collection) {
         return collection._mongoCollection.createIndex(index);
+      });
+    }
+  }, {
+    key: 'createIndexesIfNeeded',
+    value: function createIndexesIfNeeded(className, fieldName, type) {
+      if (type && type.type === 'Polygon') {
+        var index = _defineProperty({}, fieldName, '2dsphere');
+        return this.createIndex(className, index);
+      }
+      return Promise.resolve();
+    }
+  }, {
+    key: 'createTextIndexesIfNeeded',
+    value: function createTextIndexesIfNeeded(className, query) {
+      for (var fieldName in query) {
+        if (!query[fieldName] || !query[fieldName].$text) {
+          continue;
+        }
+        var index = _defineProperty({}, fieldName, 'text');
+        return this.createIndex(className, index).catch(function (error) {
+          if (error.code === 85) {
+            throw new _node2.default.Error(_node2.default.Error.INTERNAL_SERVER_ERROR, 'Only one text index is supported, please delete all text indexes to use new field.');
+          }
+          throw error;
+        });
+      }
+      return Promise.resolve();
+    }
+  }, {
+    key: 'getIndexes',
+    value: function getIndexes(className) {
+      return this._adaptiveCollection(className).then(function (collection) {
+        return collection._mongoCollection.indexes();
       });
     }
   }]);

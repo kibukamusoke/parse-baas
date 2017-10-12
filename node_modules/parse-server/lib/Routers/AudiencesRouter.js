@@ -41,26 +41,15 @@ var AudiencesRouter = exports.AudiencesRouter = function (_ClassesRouter) {
   }
 
   _createClass(AudiencesRouter, [{
+    key: 'className',
+    value: function className() {
+      return '_Audience';
+    }
+  }, {
     key: 'handleFind',
     value: function handleFind(req) {
       var body = Object.assign(req.body, _ClassesRouter3.default.JSONFromQuery(req.query));
-      var options = {};
-
-      if (body.skip) {
-        options.skip = Number(body.skip);
-      }
-      if (body.limit || body.limit === 0) {
-        options.limit = Number(body.limit);
-      }
-      if (body.order) {
-        options.order = String(body.order);
-      }
-      if (body.count) {
-        options.count = true;
-      }
-      if (body.include) {
-        options.include = String(body.include);
-      }
+      var options = _ClassesRouter3.default.optionsFromBody(body);
 
       return _rest2.default.find(req.config, req.auth, '_Audience', body.where, options, req.info.clientSDK).then(function (response) {
 
@@ -74,30 +63,11 @@ var AudiencesRouter = exports.AudiencesRouter = function (_ClassesRouter) {
   }, {
     key: 'handleGet',
     value: function handleGet(req) {
-      req.params.className = '_Audience';
       return _get(AudiencesRouter.prototype.__proto__ || Object.getPrototypeOf(AudiencesRouter.prototype), 'handleGet', this).call(this, req).then(function (data) {
         data.response.query = JSON.parse(data.response.query);
 
         return data;
       });
-    }
-  }, {
-    key: 'handleCreate',
-    value: function handleCreate(req) {
-      req.params.className = '_Audience';
-      return _get(AudiencesRouter.prototype.__proto__ || Object.getPrototypeOf(AudiencesRouter.prototype), 'handleCreate', this).call(this, req);
-    }
-  }, {
-    key: 'handleUpdate',
-    value: function handleUpdate(req) {
-      req.params.className = '_Audience';
-      return _get(AudiencesRouter.prototype.__proto__ || Object.getPrototypeOf(AudiencesRouter.prototype), 'handleUpdate', this).call(this, req);
-    }
-  }, {
-    key: 'handleDelete',
-    value: function handleDelete(req) {
-      req.params.className = '_Audience';
-      return _get(AudiencesRouter.prototype.__proto__ || Object.getPrototypeOf(AudiencesRouter.prototype), 'handleDelete', this).call(this, req);
     }
   }, {
     key: 'mountRoutes',

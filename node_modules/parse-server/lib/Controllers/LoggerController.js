@@ -43,13 +43,33 @@ var LogOrder = exports.LogOrder = {
   ASCENDING: 'asc'
 };
 
+var logLevels = ['error', 'warn', 'info', 'debug', 'verbose', 'silly'];
+
 var LoggerController = exports.LoggerController = function (_AdaptableController) {
   _inherits(LoggerController, _AdaptableController);
 
-  function LoggerController() {
+  function LoggerController(adapter, appId) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { logLevel: 'info' };
+
     _classCallCheck(this, LoggerController);
 
-    return _possibleConstructorReturn(this, (LoggerController.__proto__ || Object.getPrototypeOf(LoggerController)).apply(this, arguments));
+    var _this = _possibleConstructorReturn(this, (LoggerController.__proto__ || Object.getPrototypeOf(LoggerController)).call(this, adapter, appId, options));
+
+    var level = 'info';
+    if (options.verbose) {
+      level = 'verbose';
+    }
+    if (options.logLevel) {
+      level = options.logLevel;
+    }
+    var index = logLevels.indexOf(level); // info by default
+    logLevels.forEach(function (level, levelIndex) {
+      if (levelIndex > index) {
+        // silence the levels that are > maxIndex
+        _this[level] = function () {};
+      }
+    });
+    return _this;
   }
 
   _createClass(LoggerController, [{
@@ -162,7 +182,12 @@ var LoggerController = exports.LoggerController = function (_AdaptableController
     value: function log(level, args) {
       // make the passed in arguments object an array with the spread operator
       args = this.maskSensitive([].concat(_toConsumableArray(args)));
-      args = [].concat(level, args);
+      args = [].concat(level, args.map(function (arg) {
+        if (typeof arg === 'function') {
+          return arg();
+        }
+        return arg;
+      }));
       this.adapter.log.apply(this.adapter, args);
     }
   }, {
@@ -194,6 +219,36 @@ var LoggerController = exports.LoggerController = function (_AdaptableController
     key: 'silly',
     value: function silly() {
       return this.log('silly', arguments);
+    }
+  }, {
+    key: 'logRequest',
+    value: function logRequest(_ref) {
+      var method = _ref.method,
+          url = _ref.url,
+          headers = _ref.headers,
+          body = _ref.body;
+
+      this.verbose(function () {
+        var stringifiedBody = JSON.stringify(body, null, 2);
+        return 'REQUEST for [' + method + '] ' + url + ': ' + stringifiedBody;
+      }, {
+        method: method,
+        url: url,
+        headers: headers,
+        body: body
+      });
+    }
+  }, {
+    key: 'logResponse',
+    value: function logResponse(_ref2) {
+      var method = _ref2.method,
+          url = _ref2.url,
+          result = _ref2.result;
+
+      this.verbose(function () {
+        var stringifiedResponse = JSON.stringify(result, null, 2);
+        return 'RESPONSE from [' + method + '] ' + url + ': ' + stringifiedResponse;
+      }, { result: result });
     }
     // check that date input is valid
 

@@ -67,7 +67,8 @@ var FeaturesRouter = exports.FeaturesRouter = function (_PromiseRouter) {
             immediatePush: req.config.hasPushSupport,
             scheduledPush: req.config.hasPushScheduledSupport,
             storedPushData: req.config.hasPushSupport,
-            pushAudiences: true
+            pushAudiences: true,
+            localization: true
           },
           schemas: {
             addField: true,

@@ -156,7 +156,7 @@ Auth.prototype._loadRoles = function () {
         _this.fetchedRoles = true;
         _this.rolePromise = null;
 
-        cacheAdapter.role.put(_this.user.id, _this.userRoles);
+        cacheAdapter.role.put(_this.user.id, Array.apply(undefined, _toConsumableArray(_this.userRoles)));
         return Promise.resolve(_this.userRoles);
       }
       var rolesMap = results.reduce(function (m, r) {
@@ -172,8 +172,7 @@ Auth.prototype._loadRoles = function () {
         });
         _this.fetchedRoles = true;
         _this.rolePromise = null;
-
-        cacheAdapter.role.put(_this.user.id, _this.userRoles);
+        cacheAdapter.role.put(_this.user.id, Array.apply(undefined, _toConsumableArray(_this.userRoles)));
         return Promise.resolve(_this.userRoles);
       });
     });

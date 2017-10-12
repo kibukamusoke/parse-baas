@@ -10,7 +10,7 @@ function validateAuthData(authData) {
     if (data.errcode == 0) {
       return;
     }
-    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'qq auth is invalid for this user.');
+    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'wechat auth is invalid for this user.');
   });
 }
 
@@ -36,7 +36,7 @@ function graphRequest(path) {
         resolve(data);
       });
     }).on('error', function () {
-      reject('Failed to validate this access token with weixin.');
+      reject('Failed to validate this access token with wechat.');
     });
   });
 }

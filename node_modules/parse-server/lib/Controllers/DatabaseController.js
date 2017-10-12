@@ -310,7 +310,7 @@ DatabaseController.prototype.update = function (className, query, update) {
       }
       validateQuery(query);
       return schemaController.getOneSchema(className, true).catch(function (error) {
-        // If the schema doesn't exist, pretend it exists with no fields. This behaviour
+        // If the schema doesn't exist, pretend it exists with no fields. This behavior
         // will likely need revisiting.
         if (error === undefined) {
           return { fields: {} };
@@ -359,6 +359,19 @@ DatabaseController.prototype.update = function (className, query, update) {
   });
 };
 
+function expandResultOnKeyPath(object, key, value) {
+  if (key.indexOf('.') < 0) {
+    object[key] = value[key];
+    return object;
+  }
+  var path = key.split('.');
+  var firstKey = path[0];
+  var nextPath = path.slice(1).join('.');
+  object[firstKey] = expandResultOnKeyPath(object[firstKey] || {}, nextPath, value[firstKey]);
+  delete object[key];
+  return object;
+}
+
 function sanitizeDatabaseResult(originalObject, result) {
   var response = {};
   if (!result) {
@@ -369,7 +382,8 @@ function sanitizeDatabaseResult(originalObject, result) {
     // determine if that was an op
     if (keyUpdate && (typeof keyUpdate === 'undefined' ? 'undefined' : _typeof(keyUpdate)) === 'object' && keyUpdate.__op && ['Add', 'AddUnique', 'Remove', 'Increment'].indexOf(keyUpdate.__op) > -1) {
       // only valid ops that produce an actionable result
-      response[key] = result[key];
+      // the op may have happend on a keypath
+      expandResultOnKeyPath(response, key, result);
     }
   });
   return Promise.resolve(response);
@@ -586,7 +600,7 @@ DatabaseController.prototype.destroy = function (className, query) {
       }
       validateQuery(query);
       return schemaController.getOneSchema(className).catch(function (error) {
-        // If the schema doesn't exist, pretend it exists with no fields. This behaviour
+        // If the schema doesn't exist, pretend it exists with no fields. This behavior
         // will likely need revisiting.
         if (error === undefined) {
           return { fields: {} };
@@ -801,7 +815,7 @@ DatabaseController.prototype.reduceInRelation = function (className, query, sche
 
     // remove the current queryKey as we don,t need it anymore
     delete query[key];
-    // execute each query independnently to build the list of
+    // execute each query independently to build the list of
     // $in / $nin
     var promises = queries.map(function (q) {
       if (!q) {
@@ -945,10 +959,10 @@ DatabaseController.prototype.find = function (className, query) {
   var classExists = true;
   return this.loadSchema().then(function (schemaController) {
     //Allow volatile classes if querying with Master (for _PushStatus)
-    //TODO: Move volatile classes concept into mongo adatper, postgres adapter shouldn't care
+    //TODO: Move volatile classes concept into mongo adapter, postgres adapter shouldn't care
     //that api.parse.com breaks when _PushStatus exists in mongo.
     return schemaController.getOneSchema(className, isMaster).catch(function (error) {
-      // Behaviour for non-existent classes is kinda weird on Parse.com. Probably doesn't matter too much.
+      // Behavior for non-existent classes is kinda weird on Parse.com. Probably doesn't matter too much.
       // For now, pretend the class exists but has no objects,
       if (error === undefined) {
         classExists = false;
@@ -957,7 +971,7 @@ DatabaseController.prototype.find = function (className, query) {
       throw error;
     }).then(function (schema) {
       // Parse.com treats queries on _created_at and _updated_at as if they were queries on createdAt and updatedAt,
-      // so duplicate that behaviour here. If both are specified, the corrent behaviour to match Parse.com is to
+      // so duplicate that behavior here. If both are specified, the correct behavior to match Parse.com is to
       // use the one that appears first in the sort list.
       if (sort._created_at) {
         sort.createdAt = sort._created_at;
@@ -1097,7 +1111,7 @@ DatabaseController.prototype.addPointerPermissions = function (schema, className
   // the ACL should have exactly 1 user
   if (perms && perms[field] && perms[field].length > 0) {
     // No user set return undefined
-    // If the length is > 1, that means we didn't dedup users correctly
+    // If the length is > 1, that means we didn't de-dupe users correctly
     if (userACL.length != 1) {
       return;
     }
@@ -1111,7 +1125,12 @@ DatabaseController.prototype.addPointerPermissions = function (schema, className
     var permFields = perms[field];
     var ors = permFields.map(function (key) {
       var q = _defineProperty({}, key, userPointer);
-      return { '$and': [q, query] };
+      // if we already have a constraint on the key, use the $and
+      if (query.hasOwnProperty(key)) {
+        return { '$and': [q, query] };
+      }
+      // otherwise just add the constaint
+      return Object.assign({}, query, _defineProperty({}, '' + key, userPointer));
     });
     if (ors.length > 1) {
       return { '$or': ors };

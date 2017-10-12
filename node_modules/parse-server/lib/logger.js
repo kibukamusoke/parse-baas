@@ -17,12 +17,13 @@ var _LoggerController = require('./Controllers/LoggerController');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function defaultLogger() {
-  var adapter = new _WinstonLoggerAdapter.WinstonLoggerAdapter({
+  var options = {
     logsFolder: _defaults2.default.logsFolder,
     jsonLogs: _defaults2.default.jsonLogs,
     verbose: _defaults2.default.verbose,
-    silent: _defaults2.default.silent });
-  return new _LoggerController.LoggerController(adapter);
+    silent: _defaults2.default.silent };
+  var adapter = new _WinstonLoggerAdapter.WinstonLoggerAdapter(options);
+  return new _LoggerController.LoggerController(adapter, null, options);
 }
 
 var logger = defaultLogger();

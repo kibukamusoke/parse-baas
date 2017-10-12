@@ -18,11 +18,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var dafaultFields = ['className', 'objectId', 'updatedAt', 'createdAt', 'ACL'];
 
 var Client = function () {
-  function Client(id, parseWebSocket) {
+  function Client(id, parseWebSocket, hasMasterKey) {
     _classCallCheck(this, Client);
 
     this.id = id;
     this.parseWebSocket = parseWebSocket;
+    this.hasMasterKey = hasMasterKey;
     this.roles = [];
     this.subscriptionInfos = new Map();
     this.pushConnect = this._pushEvent('connected');

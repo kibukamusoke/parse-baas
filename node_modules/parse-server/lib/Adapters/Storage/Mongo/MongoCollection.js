@@ -126,11 +126,6 @@ var MongoCollection = function () {
       return this._mongoCollection.updateMany(query, update);
     }
   }, {
-    key: 'deleteOne',
-    value: function deleteOne(query) {
-      return this._mongoCollection.deleteOne(query);
-    }
-  }, {
     key: 'deleteMany',
     value: function deleteMany(query) {
       return this._mongoCollection.deleteMany(query);

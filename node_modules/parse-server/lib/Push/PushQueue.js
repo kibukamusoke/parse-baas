@@ -15,9 +15,9 @@ var _rest2 = _interopRequireDefault(_rest);
 
 var _utils = require('./utils');
 
-var _deepcopy = require('deepcopy');
+var _node = require('parse/node');
 
-var _deepcopy2 = _interopRequireDefault(_deepcopy);
+var _node2 = _interopRequireDefault(_node);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -35,7 +35,7 @@ var PushQueue = exports.PushQueue = function () {
 
     _classCallCheck(this, PushQueue);
 
-    this.channel = config.channel || PUSH_CHANNEL;
+    this.channel = config.channel || PushQueue.defaultPushChannel();
     this.batchSize = config.batchSize || DEFAULT_BATCH_SIZE;
     this.parsePublisher = _ParseMessageQueue.ParseMessageQueue.createPublisher(config);
   }
@@ -46,20 +46,18 @@ var PushQueue = exports.PushQueue = function () {
       var _this = this;
 
       var limit = this.batchSize;
-      // Order by badge (because the payload is badge dependant)
-      // and createdAt to fix the order
-      var order = (0, _utils.isPushIncrementing)(body) ? 'badge,createdAt' : 'createdAt';
-      where = (0, _deepcopy2.default)(where);
-      if (!where.hasOwnProperty('deviceToken')) {
-        where['deviceToken'] = { '$exists': true };
-      }
+
+      where = (0, _utils.applyDeviceTokenExists)(where);
+
+      // Order by objectId so no impact on the DB
+      var order = 'objectId';
       return Promise.resolve().then(function () {
         return _rest2.default.find(config, auth, '_Installation', where, { limit: 0, count: true });
       }).then(function (_ref) {
         var results = _ref.results,
             count = _ref.count;
 
-        if (!results) {
+        if (!results || count == 0) {
           return Promise.reject({ error: 'PushController: no results in query' });
         }
         pushStatus.setRunning(count);
@@ -84,7 +82,7 @@ var PushQueue = exports.PushQueue = function () {
   }], [{
     key: 'defaultPushChannel',
     value: function defaultPushChannel() {
-      return PUSH_CHANNEL;
+      return _node2.default.applicationId + '-' + PUSH_CHANNEL;
     }
   }]);
 
