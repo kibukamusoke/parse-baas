@@ -9,6 +9,7 @@ parse-server:
     SSL_SERVER_CERT_FILE: "server.crt"
     SSL_SERVER_KEY_FILE: "server.key"
     DATABASE_URI: "mongodb://172.17.0.1:27020/appdata"
+    POSTGRES_URL: "postgresql://postgres:postgres@172.17.0.1:5433/ezpoint"
     APP_ID: "app11"
     MASTER_KEY: "app11!@#123"
     PARSE_MOUNT: "/parse"
@@ -55,6 +56,7 @@ parse-server:
     LOG_LEVEL:        ""
   links:
     - mongo
+    - PostgreSQL
   volumes:
     - ./cloud-code:/usr/src/app/cloud
     - ./cloud-files/uploads:/usr/src/app/files/uploads
@@ -83,6 +85,31 @@ mongo-data:
   volumes:
     - ./db-data:/data/db
   command: "--break-mongo"
+
+
+PostgreSQL:
+  restart: always
+  image: kibukamusoke/postgresql:9.6-2
+  ports:
+    - "5433:5432"
+  environment:
+    - DEBUG=false
+    - PG_TRUST_LOCALNET=true
+    - PG_PASSWORD=passw0rd
+
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_NAME=ezpoint
+    - DB_TEMPLATE=template1
+
+    - DB_EXTENSION=plpythonu
+
+    - REPLICATION_MODE=master
+    - REPLICATION_USER=repluser
+    - REPLICATION_PASS=repluserPass
+    - REPLICATION_SSLMODE=prefer
+  volumes:
+    - ./postgresql:/var/lib/postgresql
 
 
 # vim:set et ts=2 sw=2:
