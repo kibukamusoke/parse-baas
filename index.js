@@ -20,7 +20,6 @@ if (!databaseUri) {
     console.log('DATABASE_URI not specified, falling back to localhost.');
 }
 
-
 let fsAdapter = new FSFilesAdapter({
     filesSubDirectory: './cloud/files/uploads'
 });
