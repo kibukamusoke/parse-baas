@@ -21,7 +21,7 @@ if (!databaseUri) {
 }
 
 let fsAdapter = new FSFilesAdapter({
-    filesSubDirectory: './cloud/files/uploads'
+    filesSubDirectory: './files/uploads'
 });
 
 let server = new ParseServer({
