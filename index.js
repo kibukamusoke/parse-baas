@@ -41,14 +41,13 @@ let server = new ParseServer({
             senderId: process.env.FIREBASE_SENDER_ID || 1234556,
             apiKey: process.env.FIREBASE_API_KEY || '12321414343543543543'
         },
-        ios:{
+        ios: {
             pfx: path.join(__dirname, '/files/ios/my-push-certificate.p12'),
             bundleId: process.env.IOS_BUNDLE_ID || 'com.cherrybusiness.cashback',
             production: true
         }
     },
 });
-
 
 
 let allowInsecureHTTP = true;
@@ -87,16 +86,26 @@ let dashboard = new ParseDashboard(parseDashboardSettings, allowInsecureHTTP);
 
 let app = express();
 
-if(process.env.USE_SSL === 'true') {
+if (process.env.USE_SSL === 'true') {
     app.use(redirectToHTTPS([/localhost:(\d{4})/], [/\/insecure/])); // force https
 }
 
-// Serve static assets from the /public folder
-app.use('/public', express.static(path.join(__dirname, '/public')));
+// CUSTOMER WEBSITE
+app.use('/public/website', express.static(path.join(__dirname, '/public/website')));
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/website/index.html'));
+});
 
-// Parse Server plays nicely with the rest of your web routes
-app.get('/', function(req, res) {
-    res.status(200).send('Internal resource. For authorised persons only!');
+// ADMIN WEBSITE
+app.use('/public/admin', express.static(path.join(__dirname, '/public/admin')));
+app.get('/admin', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/admin/index.html'));
+});
+
+// INFO WEBSITE
+app.use('/public/shop', express.static(path.join(__dirname, '/public/shop')));
+app.get('/shop', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/shop/index.html'));
 });
 
 
@@ -106,13 +115,13 @@ app.use('/dashboard', dashboard);
 
 // There will be a test page available on the /test path of your server url
 // Remove this before launching your app
-app.get('/test', function(req, res) {
+app.get('/test', function (req, res) {
     res.sendFile(path.join(__dirname, '/public/test.html'));
 });
 
 
 // make the Parse Server available
-app.use(mount, server, function(req, res, next){
+app.use(mount, server, function (req, res, next) {
     //res.setHeader("Access-Control-Allow-Origin", "*");
 
     return next();
@@ -123,18 +132,17 @@ let port = process.env.PORT || 1337;
 
 let httpServer = null;
 
-if(process.env.USE_SSL === 'true'){
+if (process.env.USE_SSL === 'true') {
     httpServer = require('https').createServer({
         key: fs.readFileSync(path.join(__dirname, '/files/ssl/' + (process.env.SSL_SERVER_KEY_FILE || 'server.key'))),
-        cert: fs.readFileSync(path.join(__dirname, '/files/ssl/' + (process.env.SSL_SERVER_CERT_FILE ||'server.crt')))
+        cert: fs.readFileSync(path.join(__dirname, '/files/ssl/' + (process.env.SSL_SERVER_CERT_FILE || 'server.crt')))
     }, app);
 } else {
     httpServer = require('http').createServer(app);
 }
 
 
-
-httpServer.listen(port, function() {
+httpServer.listen(port, function () {
     console.log('tvx parse running on port ' + port + '.');
 });
 
