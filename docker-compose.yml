@@ -59,12 +59,7 @@ parse-server:
     - PostgreSQL
   volumes:
     - ./cloud-code:/usr/src/app/cloud
-    - ./cloud-files/uploads:/usr/src/app/files/uploads
-    - ./cloud-files/ios:/usr/src/app/files/ios
-    - ./cloud-files/ssl:/usr/src/app/files/ssl
-    - ./cloud-files/icons:/usr/src/app/files/icons
-    - ./cloud-files/logs:/usr/src/app/files/logs
-
+    - ./cloud-files:/usr/src/app/files
 mongo:
   image: mongo:3.0.8 # ref. https://github.com/ParsePlatform/parse-server/issues/1913
   ports:

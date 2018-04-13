@@ -21,7 +21,7 @@ if (!databaseUri) {
 }
 
 let fsAdapter = new FSFilesAdapter({
-    filesSubDirectory: './files/uploads'
+    filesSubDirectory: ('files/uploads')
 });
 
 let server = new ParseServer({
@@ -91,23 +91,34 @@ if (process.env.USE_SSL === 'true') {
 }
 
 // CUSTOMER WEBSITE
-app.use('/public/website', express.static(path.join(__dirname, '/public/website')));
+app.use('/', express.static(path.join(__dirname, '/public/website')));
 app.get('/', function (req, res) {
+    //res.sendFile(path.join(__dirname, '/public/website/index.html'));
+    res.redirect('/home');
+});
+app.get('/home', function (req, res) {
     res.sendFile(path.join(__dirname, '/public/website/index.html'));
 });
-
+app.get('/home/**', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/website/index.html'));
+});
 // ADMIN WEBSITE
-app.use('/public/admin', express.static(path.join(__dirname, '/public/admin')));
+app.use('/admin', express.static(path.join(__dirname, '/public/admin')));
 app.get('/admin', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/admin/index.html'));
+});
+app.get('/admin/**', function (req, res) {
     res.sendFile(path.join(__dirname, '/public/admin/index.html'));
 });
 
 // INFO WEBSITE
-app.use('/public/shop', express.static(path.join(__dirname, '/public/shop')));
+app.use('/shop', express.static(path.join(__dirname, '/public/shop')));
 app.get('/shop', function (req, res) {
     res.sendFile(path.join(__dirname, '/public/shop/index.html'));
 });
-
+app.get('/shop/**', function (req, res) {
+    res.sendFile(path.join(__dirname, '/public/shop/index.html'));
+});
 
 // make the Parse Dashboard available at /dashboard
 app.use('/dashboard', dashboard);
@@ -119,7 +130,6 @@ app.get('/test', function (req, res) {
     res.sendFile(path.join(__dirname, '/public/test.html'));
 });
 
-
 // make the Parse Server available
 app.use(mount, server, function (req, res, next) {
     //res.setHeader("Access-Control-Allow-Origin", "*");
@@ -127,6 +137,9 @@ app.use(mount, server, function (req, res, next) {
     return next();
 });
 
+app.get('*', function (req, res) { // 404 routes to / website home
+    res.redirect('/home');
+});
 
 let port = process.env.PORT || 1337;
 
@@ -141,11 +154,9 @@ if (process.env.USE_SSL === 'true') {
     httpServer = require('http').createServer(app);
 }
 
-
 httpServer.listen(port, function () {
     console.log('tvx parse running on port ' + port + '.');
 });
 
 // This will enable the Live Query real-time server
 ParseServer.createLiveQueryServer(httpServer);
-
